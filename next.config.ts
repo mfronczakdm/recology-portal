@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Cache Components stay off so the fake session cookie and per-request
+  // mock delays render on each visit instead of being prerendered.
   turbopack: {
     rules: {
       "*.css": {

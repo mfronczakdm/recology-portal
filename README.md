@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Recology Customer Portal — demo front end
 
-## Getting Started
+A modern, mobile-first front end for the Recology customer portal. It is a **demo only**: mock data, no database, and no real payments. The story for the demo is that customers and Recology’s back office keep the same AMCS platform, account numbers, invoice numbers, and labels. Only the front end is new.
 
-First, run the development server:
+## Demo credentials
+
+Sign in at `/login` with any valid email and the password `demo1234`.
+
+A wrong password shows an inline error. Register at `/create-an-account` with any values that pass validation (invoice numbers look like `INV1000`). Registration sets the same session cookie and lands you on the dashboard.
+
+Every signed-in email sees the same two mock service accounts. The name in the header is taken from the email you used. Switch accounts from the header to change the balance, collection day, and invoices.
+
+Guest payment samples:
+
+| Account Number | Invoice Number | Result |
+| --- | --- | --- |
+| `10458291` | `INV104582` | Balance due $86.42 |
+| `20933104` | `INV209331` | Already paid |
+
+Anything else shows an invoice-not-found error. Payments show reference `PMT-482913` and are not processed.
+
+## Sitecore CDP events
+
+This portal is an external app. It sends SitecoreAI events with the Cloud SDK (`@sitecore-cloudsdk/events` 0.6) and the analytics identifier `recology`.
+
+On a successful registration at `/create-an-account`, the browser sends:
+
+1. An `IDENTITY` event for the new email (`identifiers` provider `email`), so the anonymous browser becomes that customer.
+2. A custom event named `New Account Created`.
+
+Both go to `edge-platform.sitecorecloud.io`. In the browser network log, filter for that host and look for a `POST` whose name starts with `events` and whose status is `201`. The payload `browser_id` matches the `sc_cid` cookie.
+
+Set `NEXT_PUBLIC_SITECORE_EDGE_CONTEXT_ID` to the same Edge Context ID the [marketing site](https://recology.vercel.app/) uses, then restart the dev server. Until that value is set, registration still completes and the success screen says tracking is waiting.
+
+`https://recology.vercel.app` and this portal are different sites, so they do not share the `sc_cid` cookie. To attach the new account to a visitor who was already on the marketing site, open the portal with that visitor’s browser id, for example `http://localhost:3002/create-an-account?sc_cid=<browser-id>`. The portal writes that value into `sc_cid` before the Cloud SDK starts.
+
+## The AMCS adapter
+
+`src/lib/amcs/client.ts` is the only place the UI asks for portal data. Each function waits 300–600ms and returns typed mock data from `src/lib/amcs/mock-data.ts`.
+
+In production these call the existing AMCS Customer Portal APIs — the UI is a drop-in replacement; no back-office change required. Swap the bodies of those functions for the real endpoints and leave the screens alone.
+
+Route protection lives in `src/proxy.ts`. Next.js 16 renamed Middleware to Proxy; this file is that gate. `/dashboard` requires the `recology_session` cookie set by the sign-in and register server actions. Sign out clears it.
+
+The account switcher reads the shared mock account list directly so the shell stays instant. Page bodies go through the adapter, which is why the dashboard, invoices, payments, payment accounts, and calendar show a short skeleton.
+
+## Brand assets
+
+Drop replacements in place without changing code:
+
+- `public/recology-logo.png` — used in the header. If the file fails to load, the UI falls back to a green **Recology** wordmark.
+- `public/auth-bg.jpg` — right-hand photo on Sign In, Register, and Forgot Password. If it fails to load, that panel falls back to a green gradient.
+
+Colors are CSS variables in `src/app/globals.css` (`--primary` `#00853F`, hover token `primary-hover` `#00632F`, tint `brand-tint` `#E8F5EC`). Change them there to re-skin the portal.
+
+## Choices
+
+- Cache Components and partial prefetching are off. The session cookie and the mock delays need to run on each request.
+- **Make a Payment** is a presentational pay flow so **Pay now** has a destination. **Service Locations**, **Update contact details**, and **Request service change** are “Coming soon in demo” placeholders so those menu items never 404.
+- **Support Request** in the footer opens a dialog. The same form is a page under My Recology Service. Both toast “Request Submitted Successfully”.
+- **Forgot Password?** confirms on screen and does not send email.
+- Stop paper statements warns that the request can take 1–2 billing cycles, then shows the same success toast.
+- Dark mode is not included.
+- The bill illustration on the home page and the Account / Invoice help icons is drawn in the page (callouts 1 and 2), not a separate image.
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run build
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
