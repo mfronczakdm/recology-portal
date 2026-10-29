@@ -34,6 +34,14 @@ Set `NEXT_PUBLIC_SITECORE_EDGE_CONTEXT_ID` to the same Edge Context ID the [mark
 
 `https://recology.vercel.app` and this portal are different sites, so they do not share the `sc_cid` cookie. To attach the new account to a visitor who was already on the marketing site, open the portal with that visitor’s browser id, for example `http://localhost:3002/create-an-account?sc_cid=<browser-id>`. The portal writes that value into `sc_cid` before the Cloud SDK starts.
 
+## Headless personalization
+
+The home page asks SitecoreAI for the live headless experience `newcustomer` and, when that call returns content, shows it in a box above **My Recology Account**. The request follows the SitecoreAI REST steps: create a client id, call `callFlows`, then send a `pageView` goal for `/`.
+
+If the experience is missing, the visitor does not qualify, or the call fails, the box stays off and the rest of the page is unchanged. Open `/?personalization=off` to skip the calls. Set `NEXT_PUBLIC_HEADLESS_PERSONALIZATION=false` to turn the box off for every page load.
+
+This work is on the `headless-personalization` branch. `git checkout main` returns to the homepage without it.
+
 ## The AMCS adapter
 
 `src/lib/amcs/client.ts` is the only place the UI asks for portal data. Each function waits 300–600ms and returns typed mock data from `src/lib/amcs/mock-data.ts`.

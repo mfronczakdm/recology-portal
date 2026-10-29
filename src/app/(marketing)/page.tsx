@@ -1,6 +1,7 @@
 import { CreditCard, LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { MockBill } from "@/components/mock-bill";
+import { PersonalizedBanner } from "@/components/sitecore/personalized-banner";
 import { Button } from "@/components/ui/button";
 
 const actions = [
@@ -30,6 +31,8 @@ const actions = [
 export default function HomePage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+      {/* Remove PersonalizedBanner to restore this page without the headless experience. */}
+      <PersonalizedBanner />
       <div className="max-w-2xl">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">Customer portal</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
