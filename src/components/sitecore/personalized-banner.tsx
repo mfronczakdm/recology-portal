@@ -65,15 +65,17 @@ export function PersonalizedBanner() {
     ),
   );
 
-  const extras = Object.entries(content).flatMap(([key, value]) => {
-    if (used.has(key)) return [];
+  const extras: { key: string; text?: string; items?: string[] }[] = [];
+  for (const [key, value] of Object.entries(content)) {
+    if (used.has(key)) continue;
     if (Array.isArray(value)) {
       const items = value.map(textValue).filter(Boolean);
-      return items.length ? [{ key, items }] : [];
+      if (items.length) extras.push({ key, items });
+      continue;
     }
     const text = textValue(value);
-    return text ? [{ key, text }] : [];
-  });
+    if (text) extras.push({ key, text });
+  }
 
   const safeHref = href.startsWith("/") || href.startsWith("https://") ? href : "";
   const safeImage = image.startsWith("https://") ? image : "";
@@ -93,7 +95,7 @@ export function PersonalizedBanner() {
           {extras.map((item) => (
             <div key={item.key}>
               <dt className="font-semibold text-slate-900">{labelFor(item.key)}</dt>
-              {"items" in item ? (
+              {item.items ? (
                 <dd>
                   <ul className="mt-1 list-disc pl-5">
                     {item.items.map((entry) => (
